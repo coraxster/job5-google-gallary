@@ -75,7 +75,9 @@ class imageStoreManager
      */
     public function storeImage($link, $fileName){
         if (file_exists($this->storeFolder . $fileName)) {
-            $fileName = rand(5, 15) . $fileName;
+            do{
+                $fileName = rand(0, 10) . $fileName;
+            }while(file_exists($this->storeFolder . $fileName));
         }
 
         if ( function_exists('curl_version') ){

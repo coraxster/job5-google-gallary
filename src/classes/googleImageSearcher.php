@@ -116,6 +116,25 @@ class googleImageSearcher
     }
 
 
+    /**
+     * @param $num
+     * @return array
+     * @throws Exception
+     */
+    public function getAll($num){
+        if ($num > 100){
+            throw new Exception('Google API error 5. Google limits number of total results for query. Its 100.');
+        }
+        $imagesDataArray = array();
+        do{
+            $imagesDataChunk = $this->getChunk( $num - count($imagesDataArray) );
+            $imagesDataArray = array_merge($imagesDataArray, $imagesDataChunk);
+        }while ( (count($imagesDataArray) <> $num) and (count($imagesDataChunk)) );
+
+        return $imagesDataArray;
+    }
+
+
 
 
 

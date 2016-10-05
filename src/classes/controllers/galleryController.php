@@ -55,27 +55,24 @@ class galleryController
         $imageSearcher->setQuery($queryRequest);
         $storeManager->emptyStorage();
 
-        do{
-            try{
-                $imagesDataArray = $imageSearcher->getChunk(
-                    $numRequest - $storeManager->getSavedCount()
-                );
-            }catch (\Exception $e){
-                $this->ci->logger->info('Fatal error while search. ' . $e->getMessage());
-                return $response->withJson(array('error' => $e->getMessage()), 500);
-            }
+        try{
+            $imagesDataArray = $imageSearcher->getAll($numRequest);
+        }catch (\Exception $e){
+            $this->ci->logger->info('Fatal error while search. ' . $e->getMessage());
+            return $response->withJson(array('error' => $e->getMessage()), 500);
+        }
 
-            foreach ($imagesDataArray as $key=>$imageData){
-                try{
-                    $storeManager->storeImage(
-                        $imageData['link'],
-                        \imageStoreManager::sanitizeString( $imageData['snippet'] ) . '.jpg'
-                    );
-                }catch (\Exception $e ){
-                    $this->ci->logger->info('Error with image saving. ' . $e->getMessage());
-                }
+
+        foreach ($imagesDataArray as $key=>$imageData){
+            try{
+                $storeManager->storeImage(
+                    $imageData['link'],
+                    \imageStoreManager::sanitizeString( $imageData['snippet'] ) . '.jpg'
+                );
+            }catch (\Exception $e ){
+                $this->ci->logger->info('Error with image saving. ' . $e->getMessage());
             }
-        } while ( ($storeManager->getSavedCount() <> $numRequest) and (count($imagesDataArray)) );
+        }
 
 
         $imagesURLs = array();
