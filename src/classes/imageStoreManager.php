@@ -1,5 +1,7 @@
 <?php
 
+use MCurl\Client;
+
 /**
  * Created by PhpStorm.
  * User: dkuzmin
@@ -57,6 +59,7 @@ class imageStoreManager
 
     private static function compressJpg($fileLocationFrom, $fileLocationTo, $width, $height){
         list($width_orig, $height_orig, $image_type) = getimagesize($fileLocationFrom);
+        if (!$image_type) throw new \Exception('Unable to determine the type of image ' . $fileLocationFrom);
         $ratio_orig = $width_orig / $height_orig;
         if ($width / $height > $ratio_orig) {
             $width = $height * $ratio_orig;
@@ -106,7 +109,7 @@ class imageStoreManager
     public function storeImage($link, $fileName){
         while(file_exists($this->storeFolder . $fileName)){
                 $fileName = rand(0, 10) . $fileName;
-            }
+        }
 
         if ( function_exists('curl_version') ){
             $ch = curl_init($link);
@@ -117,6 +120,7 @@ class imageStoreManager
             curl_close($ch);
             if(curl_errno($ch)){
                 fclose($fp);
+                unlink($fp);
                 throw new \Exception('File "' . $link . '" not saved.');
             }
             fclose($fp);
@@ -148,6 +152,59 @@ class imageStoreManager
             if(is_file($file))
                 unlink($file); // delete file
         }
+    }
+
+
+    public function storeImagesAsinc($imagesDataArray){
+        $client = new Client();
+        //$client->setSleep (40, 1);
+
+        foreach($imagesDataArray as $i=>$iData) {
+            $fileName = self::sanitizeString($iData['snippet'])  . '.jpg';
+            while(file_exists($this->storeFolder . $fileName)){
+                $fileName = rand(0, 10) . $fileName;
+            }
+            $imagesDataArray[$i]['fileName'] = $fileName;
+            $client->add(
+                [
+                    CURLOPT_URL => $iData['link'],
+                    CURLOPT_TIMEOUT => 5
+                ]
+            );
+        }
+        $notSaved = array();
+        while($result = $client->next()) {
+
+            $url = $result->info['url'];
+            $found = array_filter($imagesDataArray, function ($iData) use ($url){
+                return $iData['link'] == $url;
+            });
+            $iData = array_shift($found);
+            if ($result->hasError()){
+                $notSaved[] = $iData;
+                continue;
+            }
+            file_put_contents($this->storeFolder . $iData['fileName'], $result);
+
+            $thDir = $this->storeFolder . 'th/';
+            if (!is_dir($thDir)){
+                mkdir($thDir);
+            }
+            try{
+                self::compressJpg($this->storeFolder . $iData['fileName'], $thDir . $iData['fileName'], $this->thSize, $this->thSize);
+            }catch (\Exception $e){
+                $notSaved[] = $iData;
+                unlink($this->storeFolder . $iData['fileName']);
+                continue;
+            }
+
+            $this->savedImages[] = $iData['fileName'];
+        }
+        if (count($notSaved) > 0){
+            return $notSaved;
+        }
+        return true;
+
     }
 
 

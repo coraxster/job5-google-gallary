@@ -67,8 +67,7 @@ class galleryController
             return $response->withJson(array('error' => $e->getMessage()), 500);
         }
 
-
-        foreach ($imagesDataArray as $key=>$imageData){
+        /*foreach ($imagesDataArray as $imageData){
             try{
                 $storeManager->storeImage(
                     $imageData['link'],
@@ -77,8 +76,14 @@ class galleryController
             }catch (\Exception $e ){
                 $this->ci->logger->info('Error with image saving. ' . $e->getMessage());
             }
-        }
+        }*/
 
+        $result = $storeManager->storeImagesAsinc(
+            $imagesDataArray
+        );
+        if (is_array($result)){
+            foreach ($result as $iData) $this->ci->logger->info('Error with image saving. ' . $iData['fileName']);
+        }
 
         $imagesURLs = array();
         foreach ($storeManager->getSavedImages() as $image){

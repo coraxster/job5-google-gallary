@@ -8,6 +8,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 	apt-get -y install software-properties-common
 RUN DEBIAN_FRONTEND=noninteractive \
 	apt-get -y --force-yes upgrade php5;\
+	apt-get -y --force-yes install php5-curl;\
 	printf "%s\n/etc/init.d/apache2 start" >> /etc/bash.bashrc;\
 	service apache2 start;\
 	a2enmod rewrite;\
