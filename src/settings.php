@@ -23,8 +23,9 @@ return [
             'customSearchKey' => '017208545546905665118:szy-v54078u'
         ],
 
-        'numberOfImages' => 24,
-        'downloadTimeout' => 10,
+        'numberOfImages' => 100,
+        'downloadTimeout' => 3,
+        'thumbnailSize' => 300
 
 
     ],

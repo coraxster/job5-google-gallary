@@ -33,10 +33,14 @@ class galleryController
      * processing search request
      */
     public function searchImage($request, $response, $args){
+
+
+
         $parsedBody = $request->getParsedBody();
         $queryRequest = preg_replace('![^\w\d\s]*!', '', $parsedBody['query']);
         $numRequest = $this->ci->settings['numberOfImages'];
         $saveFolder =  $this->ci->settings['public_folder'] . 'images/';
+        $thSize = $this->ci->settings['thumbnailSize'];
 
         try{
             $imageSearcher = new \googleImageSearcher(
@@ -45,7 +49,8 @@ class galleryController
             );
             $storeManager = new \imageStoreManager(
                 $saveFolder . \imageStoreManager::sanitizeString($queryRequest) . '/',
-                $this->ci->settings['downloadTimeout']
+                $this->ci->settings['downloadTimeout'],
+                $thSize
             );
         }catch (\Exception $e){
             $this->ci->logger->info('Fatal error while initialization. ' . $e->getMessage());
@@ -77,7 +82,10 @@ class galleryController
 
         $imagesURLs = array();
         foreach ($storeManager->getSavedImages() as $image){
-            $imagesURLs[] = 'images/' . \imageStoreManager::sanitizeString($queryRequest) . '/' . $image;
+            $imagesURLs[] = [
+                'big' => '/images/' . \imageStoreManager::sanitizeString($queryRequest) . '/' . $image,
+                'th' => '/images/' . \imageStoreManager::sanitizeString($queryRequest) . '/th/' . $image
+            ];
         }
 
         return $response->withJson(array('images' => $imagesURLs));
